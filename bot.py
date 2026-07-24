@@ -87,13 +87,22 @@ async def check_membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
-    # بخش مخصوص ادمین: وقتی ادمین روی عکس کاربر Reply می‌کند و عکس ویرایش‌شده می‌فرستد
+    # بخش مدیریت ادمین برای ارسال عکس ویرایش‌شده با ریپلی
     if user.id == ADMIN_ID:
         if update.message.reply_to_message and update.message.reply_to_message.caption:
             try:
                 caption_text = update.message.reply_to_message.caption
-                target_user_id = int(caption_text.split("ID:")[-1].strip())
+                # استخراج دقیق ID کاربر از خط مشخص شده در کپشن
+                target_user_id = None
+                for line in caption_text.split("\n"):
+                    if line.startswith("ID:"):
+                        target_user_id = int(line.replace("ID:", "").strip())
+                        break
                 
+                if not target_user_id:
+                    # روش پشتیبان برای استخراج ID
+                    target_user_id = int(caption_text.split("ID:")[-1].strip())
+
                 ed_photo = update.message.photo[-1].file_id
                 await context.bot.send_photo(
                     chat_id=target_user_id,
@@ -107,7 +116,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("⚠️ لطفاً روی عکس دریافتی از کاربر Reply کنید و سپس عکس ویرایش‌شده را بفرستید.")
         return
 
-    # بخش کاربران عادی
+    # کاربران عادی
     if user_state.get(user.id) != "WAIT_PHOTO":
         await update.message.reply_text(
             "ابتدا /start را بزنید."
@@ -115,11 +124,13 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     photo_file = update.message.photo[-1].file_id
+    username_str = f"@{user.username}" if user.username else "ندارد"
 
+    # ارسال اطلاعات کامل و مشخص به ادمین همراه با آیدی عددی و یوزرنیم
     await context.bot.send_photo(
         chat_id=ADMIN_ID,
         photo=photo_file,
-        caption=f"عکس جدید از:\n{user.full_name}\nID:{user.id}",
+        caption=f"📥 عکس جدید دریافت شد!\n\n👤 نام: {user.full_name}\nลิงک یوزرنیم: {username_str}\nID: {user.id}",
     )
 
     await update.message.reply_text(
@@ -136,5 +147,7 @@ def main():
 
     print("Bot Started...")
     app.run_polling()
+
+
 if __name__ == "__main__":
     main()
