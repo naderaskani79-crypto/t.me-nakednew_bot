@@ -73,7 +73,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "برای استفاده از ربات ابتدا عضو کانال شوید.",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
-      async def check_membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def check_membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
